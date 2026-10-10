@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- Fix the upstream reboot overlay CSS so `reboot-overlay hidden` is actually hidden; upstream defines `.hidden` before `.reboot-overlay`, so the later overlay `display: flex` rule made the default "Rebooting printer…" overlay visible even when no reboot was running.
+
 ## 0.1.6
 
 - Normalize `GET /api/printer/material-station` with no active printer context from upstream `503` to an empty successful status response so the IFS/material-station card does not keep retrying an error state when no printer is configured.

@@ -96,6 +96,9 @@ function rewriteText(body, contentType) {
       'await fetchPrinterContexts();\n        if (!getCurrentContextId()) {\n            updatePrinterStatus(null);\n            updateConnectionStatus(false);\n            return;\n        }\n        await loadPrinterFeatures();\n        await applyUrlPrinterSelection();'
     );
   }
+  if (contentType.includes('text/css')) {
+    text += '\n.reboot-overlay.hidden { display: none !important; }\n';
+  }
   return Buffer.from(text, 'utf8');
 }
 
@@ -148,7 +151,11 @@ function proxyHttp(req, res) {
         let body = Buffer.concat(chunks);
         const headers = { ...upstreamRes.headers };
         delete headers['content-length'];
-        if (contentType.includes('text/html') || contentType.includes('javascript')) {
+        if (
+          contentType.includes('text/html') ||
+          contentType.includes('javascript') ||
+          contentType.includes('text/css')
+        ) {
           body = rewriteText(body, contentType);
         }
         const normalized = normalizeNoActivePrinterResponse(
