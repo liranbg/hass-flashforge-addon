@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Normalize `GET /api/printer/status` with no active printer context from upstream `503` to an empty successful status response so first-load UI state clears cleanly when no printer is configured.
+
 ## 0.1.4
 
 - Clear stale printer status in the browser when FlashForgeWebUI has no active printer context.

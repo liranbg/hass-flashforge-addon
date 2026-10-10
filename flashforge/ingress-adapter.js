@@ -99,6 +99,31 @@ function rewriteText(body, contentType) {
   return Buffer.from(text, 'utf8');
 }
 
+function normalizeNoActivePrinterResponse(upstreamPath, statusCode, headers, body) {
+  if (upstreamPath !== '/api/printer/status' || statusCode !== 503) {
+    return { statusCode, headers, body };
+  }
+
+  try {
+    const parsed = JSON.parse(body.toString('utf8'));
+    if (parsed?.success === false && parsed?.error === 'No active printer context') {
+      const normalizedBody = Buffer.from(JSON.stringify({ success: true, status: null }), 'utf8');
+      return {
+        statusCode: 200,
+        headers: {
+          ...headers,
+          'content-type': 'application/json; charset=utf-8',
+        },
+        body: normalizedBody,
+      };
+    }
+  } catch {
+    // Leave non-JSON or unexpected responses unchanged.
+  }
+
+  return { statusCode, headers, body };
+}
+
 function proxyHttp(req, res) {
   const upstreamPath = stripIngressPath(req.url || '/');
   const headers = { ...req.headers, host: `${backendHost}:${backendPort}` };
@@ -115,8 +140,14 @@ function proxyHttp(req, res) {
         if (contentType.includes('text/html') || contentType.includes('javascript')) {
           body = rewriteText(body, contentType);
         }
-        res.writeHead(upstreamRes.statusCode || 502, headers);
-        res.end(body);
+        const normalized = normalizeNoActivePrinterResponse(
+          upstreamPath,
+          upstreamRes.statusCode || 502,
+          headers,
+          body
+        );
+        res.writeHead(normalized.statusCode, normalized.headers);
+        res.end(normalized.body);
       });
     }
   );
