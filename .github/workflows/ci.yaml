@@ -21,15 +21,22 @@ jobs:
         run: python3 tests/validate_metadata.py
 
       - name: Check ingress adapter syntax
-        run: node --check flashforge/ingress-adapter.js
+        run: |
+          node --check flashforge/ingress-adapter.js
+          node --check flashforge-dev/ingress-adapter.js
 
       - name: Lint shell scripts
-        run: shellcheck flashforge/run.sh tests/*.sh
+        run: shellcheck flashforge/run.sh flashforge-dev/run.sh tests/*.sh
 
       - name: Lint Dockerfile
         uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: flashforge/Dockerfile
+
+      - name: Lint experimental Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: flashforge-dev/Dockerfile
 
   build:
     runs-on: ${{ matrix.runner }}
@@ -37,10 +44,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: amd64
+          - addon: flashforge
+            arch: amd64
             platform: linux/amd64
             runner: ubuntu-24.04
-          - arch: aarch64
+          - addon: flashforge
+            arch: aarch64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - addon: flashforge-dev
+            arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - addon: flashforge-dev
+            arch: aarch64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
     steps:
@@ -53,17 +70,17 @@ jobs:
       - name: Extract base image
         id: base
         run: |
-          image=$(grep -E "^  ${{ matrix.arch }}:" flashforge/build.yaml | awk '{print $2}')
+          image=$(grep -E "^  ${{ matrix.arch }}:" ${{ matrix.addon }}/build.yaml | awk '{print $2}')
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker image (${{ matrix.arch }})
+      - name: Build Docker image (${{ matrix.addon }}, ${{ matrix.arch }})
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: flashforge
+          context: ${{ matrix.addon }}
           platforms: ${{ matrix.platform }}
           push: false
           load: true
-          tags: hass-flashforge-addon:ci-${{ matrix.arch }}
+          tags: hass-flashforge-addon:ci-${{ matrix.addon }}-${{ matrix.arch }}
           build-args: |
             BUILD_FROM=${{ steps.base.outputs.image }}
             BUILD_ARCH=${{ matrix.arch }}
@@ -71,5 +88,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test (${{ matrix.arch }})
-        run: bash tests/smoke.sh hass-flashforge-addon:ci-${{ matrix.arch }}
+      - name: Smoke test (${{ matrix.addon }}, ${{ matrix.arch }})
+        run: bash tests/smoke.sh hass-flashforge-addon:ci-${{ matrix.addon }}-${{ matrix.arch }}

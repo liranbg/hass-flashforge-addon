@@ -11,6 +11,10 @@ This repository intentionally does not add Home Assistant entities, MQTT, printe
 3. Start the add-on and open it from the sidebar.
 4. Configure printers through the upstream UI.
 
+## Experimental add-on
+
+This repository also provides `FlashForge WebUI Experimental`, a separate add-on slug for testing `0.2.0-dev` changes without replacing the regular add-on. The experimental build is pinned to upstream FlashForgeWebUI stable `v1.1.0`.
+
 ## Security model
 
 - Ingress only: the add-on does not publish host ports by default.
