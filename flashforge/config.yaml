@@ -1,0 +1,27 @@
+---
+name: FlashForge WebUI
+slug: flashforge_webui
+description: "FlashForge WebUI wrapped as a Home Assistant add-on"
+url: "https://github.com/liranbg/hass-flashforge-addon"
+version: "0.1.0"
+image: "ghcr.io/liranbg/hass-flashforge-addon/{arch}"
+startup: services
+init: false
+arch:
+  - amd64
+  - aarch64
+
+ingress: true
+ingress_port: 3000
+ingress_stream: true
+panel_icon: mdi:printer-3d
+panel_title: FlashForge WebUI
+
+ports: {}
+ports_description: {}
+
+options: {}
+schema: {}
+
+backup_exclude:
+  - "*.log"
