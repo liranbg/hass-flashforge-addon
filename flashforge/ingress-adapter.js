@@ -33,6 +33,34 @@ function flashforgeArgs(options) {
   return args;
 }
 
+function removeBundledDemoPrinter(options) {
+  if (options.no_printers === false) return;
+
+  const printerDetailsPath = '/data/printer_details.json';
+  try {
+    const parsed = JSON.parse(fs.readFileSync(printerDetailsPath, 'utf8'));
+    const printers = parsed?.printers;
+    const printerIds = printers && typeof printers === 'object' ? Object.keys(printers) : [];
+    const onlyPrinter = printerIds.length === 1 ? printers[printerIds[0]] : null;
+
+    if (
+      parsed?.lastUsedPrinterSerial === 'SNMQRE9400951' &&
+      onlyPrinter?.SerialNumber === 'SNMQRE9400951' &&
+      onlyPrinter?.IPAddress === '192.168.1.110'
+    ) {
+      fs.writeFileSync(
+        printerDetailsPath,
+        `${JSON.stringify({ lastUsedPrinterSerial: null, printers: {} }, null, 2)}\n`
+      );
+      console.log('[adapter] Removed bundled FlashForgeWebUI demo printer from saved state');
+    }
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.warn(`[adapter] Could not inspect saved printer state: ${err.message}`);
+    }
+  }
+}
+
 function stripIngressPath(url) {
   return url.replace(ingressPattern, '') || '/';
 }
@@ -87,7 +115,12 @@ function proxyHttp(req, res) {
   req.pipe(upstream);
 }
 
-const child = spawn('./flashforge-webui', flashforgeArgs(readAddonOptions()), {
+const addonOptions = readAddonOptions();
+removeBundledDemoPrinter(addonOptions);
+const childArgs = flashforgeArgs(addonOptions);
+console.log(`[adapter] Starting FlashForgeWebUI with args: ${childArgs.join(' ')}`);
+
+const child = spawn('./flashforge-webui', childArgs, {
   cwd: '/opt/flashforge-webui',
   env: { ...process.env, DATA_DIR: process.env.DATA_DIR || '/data' },
   stdio: ['ignore', 'inherit', 'inherit'],

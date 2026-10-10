@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Remove the upstream bundled demo printer from persisted state when starting in no-printers mode, preventing a first launch from showing a phantom AD5X printer state.
+- Log the effective FlashForgeWebUI startup arguments during add-on startup.
+
 ## 0.1.1
 
 - Add Home Assistant add-on icon and logo assets.
