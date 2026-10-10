@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Normalize `GET /api/printer/material-station` with no active printer context from upstream `503` to an empty successful status response so the IFS/material-station card does not keep retrying an error state when no printer is configured.
+
 ## 0.1.5
 
 - Normalize `GET /api/printer/status` with no active printer context from upstream `503` to an empty successful status response so first-load UI state clears cleanly when no printer is configured.

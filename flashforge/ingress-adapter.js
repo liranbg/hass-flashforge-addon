@@ -99,15 +99,26 @@ function rewriteText(body, contentType) {
   return Buffer.from(text, 'utf8');
 }
 
+function emptyNoActivePrinterPayload(upstreamPath) {
+  switch (upstreamPath) {
+    case '/api/printer/status':
+    case '/api/printer/material-station':
+      return { success: true, status: null };
+    default:
+      return null;
+  }
+}
+
 function normalizeNoActivePrinterResponse(upstreamPath, statusCode, headers, body) {
-  if (upstreamPath !== '/api/printer/status' || statusCode !== 503) {
+  const emptyPayload = emptyNoActivePrinterPayload(upstreamPath);
+  if (!emptyPayload || statusCode !== 503) {
     return { statusCode, headers, body };
   }
 
   try {
     const parsed = JSON.parse(body.toString('utf8'));
     if (parsed?.success === false && parsed?.error === 'No active printer context') {
-      const normalizedBody = Buffer.from(JSON.stringify({ success: true, status: null }), 'utf8');
+      const normalizedBody = Buffer.from(JSON.stringify(emptyPayload), 'utf8');
       return {
         statusCode: 200,
         headers: {

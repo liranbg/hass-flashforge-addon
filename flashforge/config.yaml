@@ -3,7 +3,7 @@ name: FlashForge WebUI
 slug: flashforge_webui
 description: "FlashForge WebUI for Home Assistant ingress"
 url: "https://github.com/liranbg/hass-flashforge-addon"
-version: "0.1.5"
+version: "0.1.6"
 image: "ghcr.io/liranbg/hass-flashforge-addon/{arch}"
 startup: services
 init: false
