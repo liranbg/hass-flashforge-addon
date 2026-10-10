@@ -39,7 +39,7 @@ ENV DATA_DIR=/data \
     NODE_ENV=production \
     HASS_INGRESS=true
 
-HEALTHCHECK --interval=30s --timeout=5s CMD curl -fsS http://127.0.0.1:3000/api/auth/status >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s CMD ["curl", "-fsS", "http://127.0.0.1:3000/api/auth/status"]
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/run.sh"]
