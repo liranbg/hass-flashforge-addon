@@ -87,6 +87,14 @@ function rewriteText(body, contentType) {
       'const wsUrl = state.authToken\n            ? `${config.wsUrl}&token=${encodeURIComponent(state.authToken)}`\n            : config.wsUrl;',
       'const basePath = window.location.pathname.match(/^(\\/api\\/hassio_ingress\\/[^/]+)(?:\\/|$)/)?.[1] ?? "";\n        const relativeWsUrl = config.wsUrl.startsWith("/") ? `${basePath}${config.wsUrl}` : config.wsUrl;\n        const wsUrl = state.authToken\n            ? `${relativeWsUrl}&token=${encodeURIComponent(state.authToken)}`\n            : relativeWsUrl;'
     );
+    text = text.replace(
+      'case \'STATUS_UPDATE\':\n            if (message.status) {\n                const status = message.status;\n                statusUpdateCallbacks.forEach((callback) => {\n                    callback(status);\n                });\n            }\n            break;',
+      'case \'STATUS_UPDATE\': {\n            const status = message.status ?? null;\n            statusUpdateCallbacks.forEach((callback) => {\n                callback(status);\n            });\n            break;\n        }'
+    );
+    text = text.replace(
+      'await loadPrinterFeatures();\n        await fetchPrinterContexts();\n        await applyUrlPrinterSelection();',
+      'await fetchPrinterContexts();\n        if (!getCurrentContextId()) {\n            updatePrinterStatus(null);\n            updateConnectionStatus(false);\n            return;\n        }\n        await loadPrinterFeatures();\n        await applyUrlPrinterSelection();'
+    );
   }
   return Buffer.from(text, 'utf8');
 }

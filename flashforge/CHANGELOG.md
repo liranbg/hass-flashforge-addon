@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Clear stale printer status in the browser when FlashForgeWebUI has no active printer context.
+- Skip printer feature/camera startup calls when no printer is connected, avoiding a stuck printer-state view on first launch or empty `all-saved-printers` startup.
+
 ## 0.1.3
 
 - Mask the `--webui-password` value in add-on startup logs while still passing the real value to FlashForgeWebUI.
