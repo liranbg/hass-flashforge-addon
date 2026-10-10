@@ -1,11 +1,16 @@
 # Changelog
 
+## 0.3.0-dev.0
+
+- Move experimental add-on to upstream latest release `v1.2.0-alpha.8`.
+- Retain the CSS fix that hides the reboot overlay when it has the `hidden` class.
+- Keep upstream no-active-printer responses and UI behavior unchanged; no 503/status overrides are applied.
+
 ## 0.2.0-dev.0
 
 - Experimental parallel add-on with a separate Home Assistant slug so it can be installed next to the regular add-on.
 - Use incrementable dev release versions (`0.2.0-dev.N`) so Home Assistant can surface experimental updates over time.
-- Re-pin upstream FlashForgeWebUI to stable `v1.1.0` instead of the `v1.2.0-alpha.*` line.
-- Start from the `0.1.3` wrapper behavior, keeping ingress support, startup options, demo-printer cleanup, and masked password logging while dropping the later no-printer 503 response rewrites and reboot-overlay CSS workaround.
+- Start from the `0.1.3` wrapper behavior, keeping ingress support, startup options, demo-printer cleanup, and masked password logging while dropping the later no-printer 503 response rewrites.
 
 ## 0.1.3
 

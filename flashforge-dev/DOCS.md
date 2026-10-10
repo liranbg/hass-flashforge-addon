@@ -1,6 +1,6 @@
 # FlashForge WebUI experimental add-on documentation
 
-This experimental add-on uses upstream FlashForgeWebUI stable `v1.1.0` and has a separate Home Assistant slug from the regular add-on so both can be installed for comparison.
+This experimental add-on uses upstream FlashForgeWebUI `v1.2.0-alpha.8` and has a separate Home Assistant slug from the regular add-on so both can be installed for comparison.
 
 ## What this add-on runs
 

@@ -10,12 +10,12 @@ ADDONS = {
     'flashforge': {
         'slug': 'flashforge_webui',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/{arch}',
-        'version': '0.1.7',
+        'version': '0.2.0',
     },
     'flashforge-dev': {
         'slug': 'flashforge_webui_experimental',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}',
-        'version': '0.2.0-dev.0',
+        'version': '0.3.0-dev.0',
     },
 }
 

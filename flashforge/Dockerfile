@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 
 ARG BUILD_ARCH
 ARG BUILD_VERSION=dev
-ARG FLASHFORGE_REF=v1.2.0-alpha.3
+ARG FLASHFORGE_REF=v1.1.0
 
 LABEL io.hass.version="${BUILD_VERSION}" \
       io.hass.type="addon" \
@@ -24,8 +24,8 @@ RUN apt-get update \
 WORKDIR /opt/flashforge-webui
 RUN set -euo pipefail; \
   case "${BUILD_ARCH}" in \
-    amd64) asset="flashforge-webui-linux-x64.bin"; sha="ff22b0d62d33df70185ad80fd595cf9e14b4063cd47f7b523aaa031e0d80a1d3" ;; \
-    aarch64) asset="flashforge-webui-linux-arm64.bin"; sha="05b35967e0d13a7b182e809f917656145473c122df5b25479ad3d4da193c9959" ;; \
+    amd64) asset="flashforge-webui-linux-x64.bin"; sha="fa43744ca72475310410e9994482c2ae267680ef33b866a3ea8cd1cafbcf68f6" ;; \
+    aarch64) asset="flashforge-webui-linux-arm64.bin"; sha="dcd303a0e22ccaee52774c56686c1a7d808f103b5ff080925cc843c92a094c4e" ;; \
     *) echo "Unsupported BUILD_ARCH=${BUILD_ARCH}" >&2; exit 1 ;; \
   esac; \
   curl -fsSL -o flashforge-webui "https://github.com/Parallel-7/FlashForgeWebUI/releases/download/${FLASHFORGE_REF}/${asset}"; \

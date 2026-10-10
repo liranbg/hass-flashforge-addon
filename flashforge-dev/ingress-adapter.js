@@ -88,6 +88,9 @@ function rewriteText(body, contentType) {
       'const basePath = window.location.pathname.match(/^(\\/api\\/hassio_ingress\\/[^/]+)(?:\\/|$)/)?.[1] ?? "";\n        const relativeWsUrl = config.wsUrl.startsWith("/") ? `${basePath}${config.wsUrl}` : config.wsUrl;\n        const wsUrl = state.authToken\n            ? `${relativeWsUrl}&token=${encodeURIComponent(state.authToken)}`\n            : relativeWsUrl;'
     );
   }
+  if (contentType.includes('text/css')) {
+    text += '\n.reboot-overlay.hidden { display: none !important; }\n';
+  }
   return Buffer.from(text, 'utf8');
 }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Promote the tested experimental add-on using stable upstream FlashForgeWebUI `v1.1.0` to the regular add-on.
+- Preserve the ingress adapter's CSS fix for the upstream reboot overlay.
+- Revert custom no-printer API/status rewrites and frontend status overrides; upstream responses pass through unchanged.
+
 ## 0.1.7
 
 - Fix the upstream reboot overlay CSS so `reboot-overlay hidden` is actually hidden; upstream defines `.hidden` before `.reboot-overlay`, so the later overlay `display: flex` rule made the default "Rebooting printer…" overlay visible even when no reboot was running.

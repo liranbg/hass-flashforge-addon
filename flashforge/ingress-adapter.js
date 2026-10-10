@@ -87,55 +87,11 @@ function rewriteText(body, contentType) {
       'const wsUrl = state.authToken\n            ? `${config.wsUrl}&token=${encodeURIComponent(state.authToken)}`\n            : config.wsUrl;',
       'const basePath = window.location.pathname.match(/^(\\/api\\/hassio_ingress\\/[^/]+)(?:\\/|$)/)?.[1] ?? "";\n        const relativeWsUrl = config.wsUrl.startsWith("/") ? `${basePath}${config.wsUrl}` : config.wsUrl;\n        const wsUrl = state.authToken\n            ? `${relativeWsUrl}&token=${encodeURIComponent(state.authToken)}`\n            : relativeWsUrl;'
     );
-    text = text.replace(
-      'case \'STATUS_UPDATE\':\n            if (message.status) {\n                const status = message.status;\n                statusUpdateCallbacks.forEach((callback) => {\n                    callback(status);\n                });\n            }\n            break;',
-      'case \'STATUS_UPDATE\': {\n            const status = message.status ?? null;\n            statusUpdateCallbacks.forEach((callback) => {\n                callback(status);\n            });\n            break;\n        }'
-    );
-    text = text.replace(
-      'await loadPrinterFeatures();\n        await fetchPrinterContexts();\n        await applyUrlPrinterSelection();',
-      'await fetchPrinterContexts();\n        if (!getCurrentContextId()) {\n            updatePrinterStatus(null);\n            updateConnectionStatus(false);\n            return;\n        }\n        await loadPrinterFeatures();\n        await applyUrlPrinterSelection();'
-    );
   }
   if (contentType.includes('text/css')) {
     text += '\n.reboot-overlay.hidden { display: none !important; }\n';
   }
   return Buffer.from(text, 'utf8');
-}
-
-function emptyNoActivePrinterPayload(upstreamPath) {
-  switch (upstreamPath) {
-    case '/api/printer/status':
-    case '/api/printer/material-station':
-      return { success: true, status: null };
-    default:
-      return null;
-  }
-}
-
-function normalizeNoActivePrinterResponse(upstreamPath, statusCode, headers, body) {
-  const emptyPayload = emptyNoActivePrinterPayload(upstreamPath);
-  if (!emptyPayload || statusCode !== 503) {
-    return { statusCode, headers, body };
-  }
-
-  try {
-    const parsed = JSON.parse(body.toString('utf8'));
-    if (parsed?.success === false && parsed?.error === 'No active printer context') {
-      const normalizedBody = Buffer.from(JSON.stringify(emptyPayload), 'utf8');
-      return {
-        statusCode: 200,
-        headers: {
-          ...headers,
-          'content-type': 'application/json; charset=utf-8',
-        },
-        body: normalizedBody,
-      };
-    }
-  } catch {
-    // Leave non-JSON or unexpected responses unchanged.
-  }
-
-  return { statusCode, headers, body };
 }
 
 function proxyHttp(req, res) {
@@ -158,14 +114,8 @@ function proxyHttp(req, res) {
         ) {
           body = rewriteText(body, contentType);
         }
-        const normalized = normalizeNoActivePrinterResponse(
-          upstreamPath,
-          upstreamRes.statusCode || 502,
-          headers,
-          body
-        );
-        res.writeHead(normalized.statusCode, normalized.headers);
-        res.end(normalized.body);
+        res.writeHead(upstreamRes.statusCode || 502, headers);
+        res.end(body);
       });
     }
   );
