@@ -33,6 +33,10 @@ function flashforgeArgs(options) {
   return args;
 }
 
+function maskSensitiveArgs(args) {
+  return args.map((arg) => (arg.startsWith('--webui-password=') ? '--webui-password=********' : arg));
+}
+
 function removeBundledDemoPrinter(options) {
   if (options.no_printers === false) return;
 
@@ -118,7 +122,7 @@ function proxyHttp(req, res) {
 const addonOptions = readAddonOptions();
 removeBundledDemoPrinter(addonOptions);
 const childArgs = flashforgeArgs(addonOptions);
-console.log(`[adapter] Starting FlashForgeWebUI with args: ${childArgs.join(' ')}`);
+console.log(`[adapter] Starting FlashForgeWebUI with args: ${maskSensitiveArgs(childArgs).join(' ')}`);
 
 const child = spawn('./flashforge-webui', childArgs, {
   cwd: '/opt/flashforge-webui',

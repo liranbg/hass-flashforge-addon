@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Mask the `--webui-password` value in add-on startup logs while still passing the real value to FlashForgeWebUI.
+
 ## 0.1.2
 
 - Remove the upstream bundled demo printer from persisted state when starting in no-printers mode, preventing a first launch from showing a phantom AD5X printer state.
