@@ -13,7 +13,7 @@ This repository intentionally does not add Home Assistant entities, MQTT, printe
 
 ## Experimental add-on
 
-This repository also provides `FlashForge WebUI Experimental`, a separate add-on slug for testing `0.2.0-dev` changes without replacing the regular add-on. The experimental build is pinned to upstream FlashForgeWebUI stable `v1.1.0`.
+This repository also provides `FlashForge WebUI Experimental`, a separate add-on slug for testing `0.2.0-dev.N` changes without replacing the regular add-on. The experimental build is pinned to upstream FlashForgeWebUI stable `v1.1.0`.
 
 ## Security model
 

@@ -3,7 +3,7 @@ name: FlashForge WebUI Experimental
 slug: flashforge_webui_experimental
 description: "Experimental FlashForge WebUI add-on using stable upstream"
 url: "https://github.com/liranbg/hass-flashforge-addon"
-version: "0.2.0-dev"
+version: "0.2.0-dev.0"
 image: "ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}"
 startup: services
 init: false

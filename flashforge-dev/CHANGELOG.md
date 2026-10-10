@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.2.0-dev
+## 0.2.0-dev.0
 
 - Experimental parallel add-on with a separate Home Assistant slug so it can be installed next to the regular add-on.
+- Use incrementable dev release versions (`0.2.0-dev.N`) so Home Assistant can surface experimental updates over time.
 - Re-pin upstream FlashForgeWebUI to stable `v1.1.0` instead of the `v1.2.0-alpha.*` line.
 - Start from the `0.1.3` wrapper behavior, keeping ingress support, startup options, demo-printer cleanup, and masked password logging while dropping the later no-printer 503 response rewrites and reboot-overlay CSS workaround.
 

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version to release, e.g. 0.1.0 or 0.2.0-dev
+        description: Version to release, e.g. 0.1.0 or 0.2.0-dev.0
         required: true
 
 permissions:
