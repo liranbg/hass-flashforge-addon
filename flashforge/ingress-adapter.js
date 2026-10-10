@@ -2,11 +2,36 @@
 
 const http = require('node:http');
 const { spawn } = require('node:child_process');
+const fs = require('node:fs');
 
 const listenPort = Number(process.env.PORT || 3000);
 const backendPort = Number(process.env.FLASHFORGE_BACKEND_PORT || 3001);
 const backendHost = '127.0.0.1';
 const ingressPattern = /^\/api\/hassio_ingress\/[^/]+(?=\/|$)/;
+
+function readAddonOptions() {
+  try {
+    return JSON.parse(fs.readFileSync('/data/options.json', 'utf8'));
+  } catch (err) {
+    console.warn(`[adapter] Could not read /data/options.json, using defaults: ${err.message}`);
+    return {};
+  }
+}
+
+function flashforgeArgs(options) {
+  const args = [`--webui-port=${backendPort}`];
+  if (options.no_printers !== false) {
+    args.push('--no-printers');
+  } else if (options.all_saved_printers === true) {
+    args.push('--all-saved-printers');
+  } else if (options.last_used === true) {
+    args.push('--last-used');
+  }
+  if (typeof options.webui_password === 'string' && options.webui_password.length > 0) {
+    args.push(`--webui-password=${options.webui_password}`);
+  }
+  return args;
+}
 
 function stripIngressPath(url) {
   return url.replace(ingressPattern, '') || '/';
@@ -62,7 +87,7 @@ function proxyHttp(req, res) {
   req.pipe(upstream);
 }
 
-const child = spawn('./flashforge-webui', ['--no-printers', `--webui-port=${backendPort}`], {
+const child = spawn('./flashforge-webui', flashforgeArgs(readAddonOptions()), {
   cwd: '/opt/flashforge-webui',
   env: { ...process.env, DATA_DIR: process.env.DATA_DIR || '/data' },
   stdio: ['ignore', 'inherit', 'inherit'],

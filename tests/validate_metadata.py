@@ -32,8 +32,18 @@ for forbidden in ['hassio_api', 'homeassistant_api', 'auth_api', 'hassio_role', 
         errors.append(f'forbidden key present: {forbidden}')
 if scalar(config_text, 'ingress') != 'true' or scalar(config_text, 'ingress_port') != '3000':
     errors.append('ingress configuration mismatch')
-if not re.search(r'^options:\s*\{\}\s*$', config_text, re.M) or not re.search(r'^schema:\s*\{\}\s*$', config_text, re.M):
-    errors.append('add-on options/schema should remain empty')
+for expected in [
+    'no_printers: true',
+    'last_used: false',
+    'all_saved_printers: false',
+    'webui_password: ""',
+    'no_printers: bool',
+    'last_used: bool',
+    'all_saved_printers: bool',
+    'webui_password: password',
+]:
+    if expected not in config_text:
+        errors.append(f'missing add-on option/schema: {expected}')
 if (root / 'flashforge' / 'VERSION').read_text().strip() != scalar(config_text, 'version'):
     errors.append('VERSION does not match config.yaml')
 

@@ -5,10 +5,12 @@
 The add-on starts the upstream FlashForgeWebUI standalone server:
 
 ```text
-node dist/index.js --no-printers --webui-port=3000
+node dist/index.js --webui-port=3000 [configured FlashForgeWebUI options]
 ```
 
-`--no-printers` is intentional: the UI remains available through Home Assistant ingress and printers are added/configured through the upstream UI. Saved configuration is stored under `/data`.
+The add-on always sets the internal `--webui-port` required for Home Assistant ingress. The remaining exposed options map to upstream command-line options: `--no-printers`, `--last-used`, `--all-saved-printers`, and `--webui-password`. `--printers` is intentionally not exposed; add and manage specific printers through the upstream UI. Saved configuration is stored under `/data`.
+
+By default, `no_printers` is enabled so the UI starts without connecting to a printer. Disable `no_printers` and enable either `last_used` or `all_saved_printers` if you want automatic printer connections on startup.
 
 ## Access
 

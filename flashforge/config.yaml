@@ -1,9 +1,9 @@
 ---
 name: FlashForge WebUI
 slug: flashforge_webui
-description: "FlashForge WebUI wrapped as a Home Assistant add-on"
+description: "FlashForge WebUI for Home Assistant ingress"
 url: "https://github.com/liranbg/hass-flashforge-addon"
-version: "0.1.0"
+version: "0.1.1"
 image: "ghcr.io/liranbg/hass-flashforge-addon/{arch}"
 startup: services
 init: false
@@ -20,8 +20,16 @@ panel_title: FlashForge WebUI
 ports: {}
 ports_description: {}
 
-options: {}
-schema: {}
+options:
+  no_printers: true
+  last_used: false
+  all_saved_printers: false
+  webui_password: ""
+schema:
+  no_printers: bool
+  last_used: bool
+  all_saved_printers: bool
+  webui_password: password
 
 backup_exclude:
   - "*.log"

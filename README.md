@@ -1,8 +1,8 @@
 # FlashForge WebUI Home Assistant add-on
 
-Thin Home Assistant add-on wrapper for [Parallel-7/FlashForgeWebUI](https://github.com/Parallel-7/FlashForgeWebUI), pinned in the Docker build to `v1.2.0-alpha.3`.
+Home Assistant add-on wrapper for [Parallel-7/FlashForgeWebUI](https://github.com/Parallel-7/FlashForgeWebUI), pinned in the Docker build to `v1.2.0-alpha.3`.
 
-This repository intentionally does not add Home Assistant entities, MQTT, printer-specific add-on options, or direct Home Assistant API access. Printer setup and saved printer data are handled by the upstream FlashForgeWebUI inside the ingress UI.
+This repository intentionally does not add Home Assistant entities, MQTT, printer-specific add-on options, or direct Home Assistant API access. Printer setup and saved printer data are handled by the upstream FlashForgeWebUI inside the ingress UI. Add-on options expose the upstream startup flags for connecting to no printers, the last used printer, all saved printers, and setting the WebUI password.
 
 ## Install
 
