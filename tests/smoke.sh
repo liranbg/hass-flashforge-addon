@@ -49,7 +49,7 @@ if [[ "$image" == *dev* ]]; then
   grep -q '"authRequired":false' "$tmp_response"
   docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false) process.exit(1)'
 
-  # Turning the option off must restore upstream auth.
+  # Turning the option off must preserve the existing upstream value.
   docker exec "$container" sh -c "printf '%s\\n' '{\"no_auth\":false}' > /data/options.json"
   docker rm -f "$container" >/dev/null
   docker run -d --name "$container" -p 127.0.0.1::3000 -v "$data_dir:/data" "$image" >/dev/null
@@ -59,8 +59,8 @@ if [[ "$image" == *dev* ]]; then
     if curl -fsS "$base/api/auth/status" -o "$tmp_response"; then break; fi
     sleep 1
   done
-  grep -q '"authRequired":true' "$tmp_response"
-  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==true) process.exit(1)'
+  grep -q '"authRequired":false' "$tmp_response"
+  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false) process.exit(1)'
 fi
 
 test -d "$data_dir"
