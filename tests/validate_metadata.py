@@ -65,7 +65,7 @@ for addon_dir, expected_meta in ADDONS.items():
             errors.append(label + f'forbidden key present: {forbidden}')
     if scalar(config_text, 'ingress') != 'true' or scalar(config_text, 'ingress_port') != '3000':
         errors.append(label + 'ingress configuration mismatch')
-    for expected in [
+    expected_options = [
         'no_printers: true',
         'last_used: false',
         'all_saved_printers: false',
@@ -74,7 +74,10 @@ for addon_dir, expected_meta in ADDONS.items():
         'last_used: bool',
         'all_saved_printers: bool',
         'webui_password: password',
-    ]:
+    ]
+    if addon_dir == 'flashforge-dev':
+        expected_options.extend(['no_auth: false', 'no_auth: bool'])
+    for expected in expected_options:
         if expected not in config_text:
             errors.append(label + f'missing add-on option/schema: {expected}')
 

@@ -3,6 +3,7 @@
 const http = require('node:http');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
+const path = require('node:path');
 
 const listenPort = Number(process.env.PORT || 3000);
 const backendPort = Number(process.env.FLASHFORGE_BACKEND_PORT || 3001);
@@ -35,6 +36,19 @@ function flashforgeArgs(options) {
 
 function maskSensitiveArgs(args) {
   return args.map((arg) => (arg.startsWith('--webui-password=') ? '--webui-password=********' : arg));
+}
+
+function configureWebUIAuth(options) {
+  const configPath = path.join(process.env.DATA_DIR || '/data', 'config.json');
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw new Error(`Could not read ${configPath}: ${err.message}`);
+    config = {};
+  }
+  config.WebUIPasswordRequired = options.no_auth === true ? false : true;
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
 }
 
 function removeBundledDemoPrinter(options) {
@@ -123,6 +137,7 @@ function proxyHttp(req, res) {
 }
 
 const addonOptions = readAddonOptions();
+configureWebUIAuth(addonOptions);
 removeBundledDemoPrinter(addonOptions);
 const childArgs = flashforgeArgs(addonOptions);
 console.log(`[adapter] Starting FlashForgeWebUI with args: ${maskSensitiveArgs(childArgs).join(' ')}`);
