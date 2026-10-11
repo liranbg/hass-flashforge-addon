@@ -25,11 +25,13 @@ options:
   last_used: false
   all_saved_printers: false
   webui_password: ""
+  no_auth: false
 schema:
   no_printers: bool
   last_used: bool
   all_saved_printers: bool
   webui_password: password
+  no_auth: bool
 
 backup_exclude:
   - "*.log"
