@@ -47,7 +47,9 @@ function configureWebUIAuth(options) {
     if (err.code !== 'ENOENT') throw new Error(`Could not read ${configPath}: ${err.message}`);
     config = {};
   }
-  config.WebUIPasswordRequired = options.no_auth === true ? false : true;
+  if (options.no_auth === true) {
+    config.WebUIPasswordRequired = false;
+  }
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
 }
 
