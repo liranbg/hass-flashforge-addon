@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0-dev.1
+
+- Bump the experimental add-on version for the next development release.
+
 ## 0.3.0-dev.0
 
 - Move experimental add-on to upstream latest release `v1.2.0-alpha.8`.
