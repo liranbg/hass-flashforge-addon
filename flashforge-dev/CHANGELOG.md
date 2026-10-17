@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0-dev.2
+
+- Update the experimental add-on to upstream FlashForgeWebUI `v1.2.0`.
+- Refresh the version-pinned SHA-256 checksums for amd64 and aarch64 release binaries.
+
 ## 0.3.0-dev.1
 
 - Bump the experimental add-on version for the next development release.
