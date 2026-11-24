@@ -10,12 +10,12 @@ ADDONS = {
     'flashforge': {
         'slug': 'flashforge_webui',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/{arch}',
-        'version': '0.2.0',
+        'version': '0.2.1',
     },
     'flashforge-dev': {
         'slug': 'flashforge_webui_experimental',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}',
-        'version': '0.3.0-dev.2',
+        'version': '0.3.0-dev.3',
     },
 }
 
@@ -39,6 +39,27 @@ for addon_dir, expected_meta in ADDONS.items():
     addon_path = root / addon_dir
     config_text = (addon_path / 'config.yaml').read_text()
     label = f'{addon_dir}: '
+    dockerfile = (addon_path / 'Dockerfile').read_text()
+    if 'ARG FLASHFORGE_REF=v1.2.1\n' not in dockerfile:
+        errors.append(label + 'upstream must be pinned to v1.2.1')
+    upstream_source = (
+        'registry.gitlab.com/parallel-7/flashforgewebui:1.2.1@sha256:'
+        'a1fe43a9270bc6e0d149c5c7140913ada5a667aee71f5ce10abf2f5f7614c8d6'
+    )
+    if f'FROM {upstream_source} AS upstream' not in dockerfile:
+        errors.append(label + 'upstream must use the immutable official GitLab v1.2.1 index')
+    if 'COPY --from=upstream /app/flashforge-webui ./flashforge-webui' not in dockerfile:
+        errors.append(label + 'copy only the binary, preserving the Home Assistant runtime')
+    if 'releases/download/' in dockerfile:
+        errors.append(label + 'must not fetch binaries from frozen GitHub releases')
+    for arch, checksum in {
+        'amd64': 'ad9573ee7188697abe196f033ef15fc774664e5e63103e072fe597237090cd10',
+        'aarch64': '51ae59116eeb4e94e933662b571882a2c90e32e2335545db9035beeda1e96f36',
+    }.items():
+        if f'{arch}) sha="{checksum}"' not in dockerfile:
+            errors.append(label + f'missing verified binary checksum for {arch}')
+    if 'sha256sum -c -' not in dockerfile:
+        errors.append(label + 'downloaded binary checksum must be verified')
 
     if scalar(config_text, 'slug') != expected_meta['slug']:
         errors.append(label + 'unexpected add-on slug')

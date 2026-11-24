@@ -1,20 +1,20 @@
 # FlashForge WebUI experimental add-on documentation
 
-This experimental add-on uses upstream FlashForgeWebUI `v1.2.0-alpha.8` and has a separate Home Assistant slug from the regular add-on so both can be installed for comparison.
+This experimental add-on uses upstream FlashForgeWebUI `v1.2.1` and has a separate Home Assistant slug from the regular add-on so both can be installed for comparison.
 
 ## What this add-on runs
 
 The add-on starts the upstream FlashForgeWebUI standalone server:
 
 ```text
-node dist/index.js --webui-port=3000 [configured FlashForgeWebUI options]
+./flashforge-webui --webui-port=3001 [configured FlashForgeWebUI options]
 ```
 
 The add-on always sets the internal `--webui-port` required for Home Assistant ingress. The remaining exposed options map to upstream command-line options: `--no-printers`, `--last-used`, `--all-saved-printers`, and `--webui-password`. `--printers` is intentionally not exposed; add and manage specific printers through the upstream UI. Saved configuration is stored under `/data`.
 
 The experimental `no_auth` option defaults to `false`. When enabled, the wrapper sets upstream `WebUIPasswordRequired` to `false` in `/data/config.json`; when disabled, it preserves an existing upstream value (new installs default to `true`). Other config fields, including the password and printer settings, are retained. Home Assistant Ingress remains the access-control boundary; this option removes only FlashForge WebUI's own password prompt. Do not expose this add-on directly to untrusted networks.
 
-Upstream references (pinned to `v1.2.0-alpha.8`): [README](https://github.com/Parallel-7/FlashForgeWebUI/blob/v1.2.0-alpha.8/README.md) documents `WebUIPasswordRequired` as the setting that controls whether the WebUI requires a password; [AuthManager](https://github.com/Parallel-7/FlashForgeWebUI/blob/v1.2.0-alpha.8/src/webui/server/AuthManager.ts) implements that WebUI authentication behavior. These references concern the upstream password prompt only, not Home Assistant Ingress authentication or authorization.
+Upstream references (pinned to `v1.2.1`): [README](https://gitlab.com/parallel-7/FlashForgeWebUI/-/blob/v1.2.1/README.md) documents `WebUIPasswordRequired` as the setting that controls whether the WebUI requires a password; [AuthManager](https://gitlab.com/parallel-7/FlashForgeWebUI/-/blob/v1.2.1/src/webui/server/AuthManager.ts) implements that WebUI authentication behavior. These references concern the upstream password prompt only, not Home Assistant Ingress authentication or authorization.
 
 By default, `no_printers` is enabled so the UI starts without connecting to a printer. Disable `no_printers` and enable either `last_used` or `all_saved_printers` if you want automatic printer connections on startup.
 

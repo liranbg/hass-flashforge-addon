@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0-dev.3
+
+- Update experimental upstream FlashForgeWebUI from `v1.2.0` to `v1.2.1` and migrate binary sourcing to the official immutable GitLab registry image.
+- Verify the binary SHA-256 for amd64 and aarch64. Keep the separate experimental slug, opt-in `no_auth`, and preservation of existing upstream auth settings unchanged.
+
 ## 0.3.0-dev.2
 
 - Update the experimental add-on to upstream FlashForgeWebUI `v1.2.0`.

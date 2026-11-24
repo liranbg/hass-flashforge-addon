@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Update stable upstream FlashForgeWebUI from `v1.1.0` to `v1.2.1`.
+- Source only the binary from the official immutable multi-architecture GitLab registry image, with independently verified per-architecture SHA-256 checksums.
+- Preserve the Home Assistant base, ingress wrapper, authentication and persistent `/data` behavior. Add isolated ingress/auth/persistence regression coverage.
+
 ## 0.2.0
 
 - Promote the tested experimental add-on using stable upstream FlashForgeWebUI `v1.1.0` to the regular add-on.

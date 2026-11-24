@@ -2,10 +2,10 @@
 
 ## What this add-on runs
 
-The add-on starts the upstream FlashForgeWebUI standalone server:
+The ingress adapter listens on port `3000` and proxies the binary on internal port `3001`. Both lanes pin upstream `v1.2.1` from the official immutable GitLab registry image; see [upstream provenance](../UPSTREAM.md).
 
 ```text
-node dist/index.js --webui-port=3000 [configured FlashForgeWebUI options]
+./flashforge-webui --webui-port=3001 [configured FlashForgeWebUI options]
 ```
 
 The add-on always sets the internal `--webui-port` required for Home Assistant ingress. The remaining exposed options map to upstream command-line options: `--no-printers`, `--last-used`, `--all-saved-printers`, and `--webui-password`. `--printers` is intentionally not exposed; add and manage specific printers through the upstream UI. Saved configuration is stored under `/data`.
