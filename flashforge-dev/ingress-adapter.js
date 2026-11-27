@@ -153,8 +153,27 @@ let shuttingDown = false;
 const child = spawn('./flashforge-webui', childArgs, {
   cwd: '/opt/flashforge-webui',
   env: { ...process.env, DATA_DIR: process.env.DATA_DIR || '/data' },
-  stdio: ['ignore', 'inherit', 'inherit'],
+  stdio: ['ignore', 'pipe', 'pipe'],
 });
+const { keepLine } = require('./log-filter');
+const debugLogs = addonOptions.debug_logs === true || process.env.FLASHFORGE_DEBUG_LOGS === '1';
+function forwardLogs(stream) {
+  let pending = '';
+  stream.setEncoding('utf8');
+  stream.on('data', (chunk) => {
+    pending += chunk;
+    const lines = pending.split(/\r?\n/);
+    pending = lines.pop() || '';
+    for (const line of lines) {
+      if (keepLine(line, debugLogs)) console.log(line);
+    }
+  });
+  stream.on('end', () => {
+    if (pending && keepLine(pending, debugLogs)) console.log(pending);
+  });
+}
+forwardLogs(child.stdout);
+forwardLogs(child.stderr);
 child.on('exit', (code, signal) => {
   if (shuttingDown) {
     console.log(`[adapter] FlashForgeWebUI stopped code=${code} signal=${signal}`);

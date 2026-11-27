@@ -14,3 +14,6 @@ configuration:
   no_auth:
     name: Disable WebUI password prompt
     description: Set upstream WebUIPasswordRequired to false on startup. Home Assistant Ingress remains the access-control boundary; when off, the existing upstream setting is preserved.
+  debug_logs:
+    name: Show routine polling logs
+    description: Show repeated printer polling and status-broadcast messages. Leave disabled for normal operation; errors and important events remain visible.
