@@ -1,0 +1,173 @@
+name: Check Upstream
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Check GitLab registry for newer FlashForgeWebUI release
+        id: check
+        run: |
+          current=$(grep '^ARG FLASHFORGE_REF=' flashforge/Dockerfile | cut -d= -f2 | sed 's/^v//')
+          token=$(curl -fsSL "https://gitlab.com/jwt/auth?service=container_registry&scope=repository:parallel-7/flashforgewebui:pull" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+          latest=$(curl -fsSL -H "Authorization: Bearer ${token}" \
+            "https://registry.gitlab.com/v2/parallel-7/flashforgewebui/tags/list" \
+            | python3 -c '
+          import json, re, sys
+          tags = json.load(sys.stdin).get("tags") or []
+          semver = [t for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)]
+          semver.sort(key=lambda s: tuple(int(p) for p in s.split(".")))
+          print(semver[-1] if semver else "")
+          ')
+          echo "current=${current}" >> "$GITHUB_OUTPUT"
+          echo "latest=${latest}" >> "$GITHUB_OUTPUT"
+          has_update=$(python3 -c '
+          import sys
+          cur, lat = sys.argv[1], sys.argv[2]
+          if not lat:
+              print("false")
+          else:
+              c = tuple(int(p) for p in cur.split("."))
+              l = tuple(int(p) for p in lat.split("."))
+              print("true" if l > c else "false")
+          ' "$current" "$latest")
+          echo "has_update=${has_update}" >> "$GITHUB_OUTPUT"
+
+      - name: Inspect digests and binary checksums
+        if: steps.check.outputs.has_update == 'true'
+        id: inspect
+        run: |
+          version="${{ steps.check.outputs.latest }}"
+          image="registry.gitlab.com/parallel-7/flashforgewebui:${version}"
+          manifest_json=$(docker manifest inspect "$image")
+          index_digest=$(docker buildx imagetools inspect "$image" --raw | sha256sum | awk '{print "sha256:" $1}')
+          amd64_digest=$(echo "$manifest_json" | python3 -c '
+          import json, sys
+          for m in json.load(sys.stdin).get("manifests", []):
+              p = m.get("platform", {})
+              if p.get("os") == "linux" and p.get("architecture") == "amd64":
+                  print(m["digest"]); break
+          ')
+          arm64_digest=$(echo "$manifest_json" | python3 -c '
+          import json, sys
+          for m in json.load(sys.stdin).get("manifests", []):
+              p = m.get("platform", {})
+              if p.get("os") == "linux" and p.get("architecture") == "arm64":
+                  print(m["digest"]); break
+          ')
+
+          extract_sha() {
+            local platform="$1" digest="$2" name="ff-check-${1//\//-}"
+            local ref="registry.gitlab.com/parallel-7/flashforgewebui@${digest}"
+            docker pull --platform "$platform" "$ref" >/dev/null
+            docker create --platform "$platform" --name "$name" "$ref" >/dev/null
+            docker cp "${name}:/app/flashforge-webui" "./${name}.bin"
+            docker rm -v "$name" >/dev/null
+            sha256sum "./${name}.bin" | awk '{print $1}'
+          }
+
+          amd64_sha=$(extract_sha "linux/amd64" "$amd64_digest")
+          arm64_sha=$(extract_sha "linux/arm64" "$arm64_digest")
+
+          echo "index_digest=${index_digest}" >> "$GITHUB_OUTPUT"
+          echo "amd64_digest=${amd64_digest}" >> "$GITHUB_OUTPUT"
+          echo "arm64_digest=${arm64_digest}" >> "$GITHUB_OUTPUT"
+          echo "amd64_sha=${amd64_sha}" >> "$GITHUB_OUTPUT"
+          echo "arm64_sha=${arm64_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update upstream PR
+        if: steps.check.outputs.has_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          INDEX_DIGEST: ${{ steps.inspect.outputs.index_digest }}
+          AMD64_DIGEST: ${{ steps.inspect.outputs.amd64_digest }}
+          ARM64_DIGEST: ${{ steps.inspect.outputs.arm64_digest }}
+          AMD64_SHA: ${{ steps.inspect.outputs.amd64_sha }}
+          ARM64_SHA: ${{ steps.inspect.outputs.arm64_sha }}
+        run: |
+          branch="chore/upstream-update"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch" origin/main
+
+          python3 - <<'PY'
+          import os, pathlib, re
+
+          latest = os.environ['LATEST']
+          index_digest = os.environ['INDEX_DIGEST']
+          amd64_sha = os.environ['AMD64_SHA']
+          arm64_sha = os.environ['ARM64_SHA']
+
+          for df in ['flashforge/Dockerfile', 'flashforge-dev/Dockerfile']:
+              p = pathlib.Path(df)
+              text = p.read_text()
+              text = re.sub(
+                  r'FROM registry\.gitlab\.com/parallel-7/flashforgewebui:[^\s]+ AS upstream',
+                  f'FROM registry.gitlab.com/parallel-7/flashforgewebui:{latest}@{index_digest} AS upstream',
+                  text,
+              )
+              text = re.sub(r'ARG FLASHFORGE_REF=v[^\n]+', f'ARG FLASHFORGE_REF=v{latest}', text)
+              text = re.sub(r'amd64\) sha="[0-9a-f]+" ;;', f'amd64) sha="{amd64_sha}" ;;', text)
+              text = re.sub(r'aarch64\) sha="[0-9a-f]+" ;;', f'aarch64) sha="{arm64_sha}" ;;', text)
+              p.write_text(text)
+
+          val_path = pathlib.Path('tests/validate_metadata.py')
+          val_text = val_path.read_text()
+          val_text = re.sub(r'ARG FLASHFORGE_REF=v[^\\\n]+', f'ARG FLASHFORGE_REF=v{latest}', val_text)
+          val_text = re.sub(
+              r"registry\.gitlab\.com/parallel-7/flashforgewebui:[^']+@sha256:'\n\s+'[0-9a-f]+'",
+              f"registry.gitlab.com/parallel-7/flashforgewebui:{latest}@{index_digest.split(':')[0]}:'\n        '{index_digest.split(':')[1]}'",
+              val_text,
+          )
+          val_text = re.sub(r"'amd64': '[0-9a-f]+'", f"'amd64': '{amd64_sha}'", val_text)
+          val_text = re.sub(r"'aarch64': '[0-9a-f]+'", f"'aarch64': '{arm64_sha}'", val_text)
+          val_path.write_text(val_text)
+          PY
+
+          python3 tests/validate_metadata.py
+
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git add flashforge/Dockerfile flashforge-dev/Dockerfile tests/validate_metadata.py
+          git commit -m "chore: update FlashForgeWebUI to v${LATEST}"
+          git push --force origin "$branch"
+
+          title="Update FlashForgeWebUI to v${LATEST}"
+          body=$(printf '%s\n' \
+            "Automated update of FlashForgeWebUI from \`${CURRENT}\` to \`${LATEST}\` from \`registry.gitlab.com/parallel-7/flashforgewebui\`." \
+            "" \
+            "- **Index digest**: \`${INDEX_DIGEST}\`" \
+            "- **amd64 manifest**: \`${AMD64_DIGEST}\`" \
+            "  - Binary SHA-256: \`${AMD64_SHA}\`" \
+            "- **arm64 manifest**: \`${ARM64_DIGEST}\`" \
+            "  - Binary SHA-256: \`${ARM64_SHA}\`" \
+            "" \
+            "### Remaining manual steps" \
+            "- Update \`VERSION\`, \`config.yaml\`, \`CHANGELOG.md\`, \`DOCS.md\`, and \`UPSTREAM.md\` as needed (see \`UPSTREAM.md\`)." \
+            "- Pushing a commit (or closing/reopening) will trigger CI checks.")
+
+          pr_number=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --title "$title" --body "$body"
+          else
+            gh pr create --head "$branch" --base main --title "$title" --body "$body"
+          fi
