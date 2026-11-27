@@ -15,7 +15,7 @@ ADDONS = {
     'flashforge-dev': {
         'slug': 'flashforge_webui_experimental',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}',
-        'version': '0.3.0-dev.3',
+        'version': '0.4.0-dev.1',
     },
 }
 
