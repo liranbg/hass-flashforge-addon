@@ -5,65 +5,79 @@ image="${1:?image required}"
 container="flashforge-smoke-$RANDOM-$RANDOM"
 data_dir="$(mktemp -d)"
 cleanup() {
-  docker logs "$container" >/tmp/flashforge-smoke.log 2>&1 || true
+  docker logs "$container" >"${TMPDIR:-/tmp}/$container.log" 2>&1 || true
   docker rm -f "$container" >/dev/null 2>&1 || true
   rm -rf "$data_dir" 2>/dev/null || true
 }
 trap cleanup EXIT
 
-docker run -d --name "$container" -p 127.0.0.1::3000 -v "$data_dir:/data" "$image" >/dev/null
-port="$(docker inspect "$container" --format '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}')"
-base="http://127.0.0.1:$port"
+# No published ports or network access: all probes use container loopback.
+base="http://127.0.0.1:3000"
+request() {
+  docker exec "$container" curl -fsS "$@"
+}
+start() {
+  docker run -d --name "$container" --network none -v "$data_dir:/data" "$image" >/dev/null
+  for _ in $(seq 1 60); do
+    if request "$base/api/auth/status" >"$data_dir/response.txt" 2>/dev/null; then return; fi
+    sleep 1
+  done
+  echo 'FlashForge failed to become ready' >&2
+  return 1
+}
+restart() {
+  docker rm -f "$container" >/dev/null
+  start
+}
 
-for _ in $(seq 1 60); do
-  if curl -fsS "$base/api/auth/status" >/dev/null; then
-    break
-  fi
-  sleep 1
-done
-
+start
 tmp_response="$data_dir/response.txt"
+request "$base/" >"$tmp_response"
+grep -q 'FlashForge Web UI' "$tmp_response"
+request "$base/api/auth/status" >"$tmp_response"
+grep -q '"authRequired":true' "$tmp_response"
+request "$base/gridstack.min.css" >/dev/null
+request "$base/app.js" >/dev/null
+prefix="$base/api/hassio_ingress/testtoken"
+request "$prefix/" >"$tmp_response"
+grep -q 'FlashForge Web UI' "$tmp_response"
+request "$prefix/api/auth/status" >"$tmp_response"
+grep -q '"authRequired":true' "$tmp_response"
 
-curl -fsS "$base/" -o "$tmp_response" && grep -q 'FlashForge Web UI' "$tmp_response"
-curl -fsS "$base/api/auth/status" -o "$tmp_response" && grep -q '"authRequired":true' "$tmp_response"
-curl -fsS "$base/gridstack.min.css" >/dev/null
-curl -fsS "$base/app.js" >/dev/null
-curl -fsS "$base/api/auth/status" -o "$tmp_response" && grep -q '"authRequired":true' "$tmp_response"
-curl -fsS "$base/api/hassio_ingress/testtoken/" -o "$tmp_response" && grep -q 'FlashForge Web UI' "$tmp_response"
-curl -fsS "$base/api/hassio_ingress/testtoken/api/auth/status" -o "$tmp_response" && grep -q 'authRequired' "$tmp_response"
+# Verify the actual 1.2.1 modules still match the ingress API/WS rewrites.
+request "$prefix/core/Transport.js" >"$tmp_response"
+grep -Fq 'fetch(withIngressBase(endpoint)' "$tmp_response"
+# Literal JavaScript template expression, not shell interpolation.
+# shellcheck disable=SC2016
+grep -Fq '${getIngressBasePath()}/ws${tokenQuery}' "$tmp_response"
+request "$prefix/features/camera.js" >"$tmp_response"
+grep -Fq 'const relativeWsUrl = config.wsUrl.startsWith' "$tmp_response"
+
+# Persist a user setting and explicit password, then exercise auth through ingress.
+printf '%s\n' '{"no_printers":true,"webui_password":"isolated-smoke-password"}' >"$data_dir/options.json"
+docker exec "$container" node -e 'const fs=require("fs"); const p="/data/config.json"; const c=JSON.parse(fs.readFileSync(p)); c.DiscordUpdateIntervalMinutes=17; fs.writeFileSync(p,JSON.stringify(c))'
+restart
+request -H 'Content-Type: application/json' -d '{"password":"isolated-smoke-password"}' "$prefix/api/auth/login" >"$tmp_response"
+grep -q '"token":' "$tmp_response"
+docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.DiscordUpdateIntervalMinutes!==17) process.exit(1)'
 
 if [[ "$image" == *dev* ]]; then
-  # Exercise no-auth only for DEV; stable uses the same smoke script.
-  mkdir -p "$data_dir"
-  docker exec "$container" sh -c "printf '%s\\n' '{\"no_auth\":true}' > /data/options.json"
-  docker rm -f "$container" >/dev/null
-  docker run -d --name "$container" -p 127.0.0.1::3000 -v "$data_dir:/data" "$image" >/dev/null
-  port="$(docker inspect "$container" --format '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}')"
-  base="http://127.0.0.1:$port"
-  for _ in $(seq 1 60); do
-    if curl -fsS "$base/api/auth/status" -o "$tmp_response"; then break; fi
-    sleep 1
-  done
+  # DEV alone supports opting out of upstream auth. Keep existing config fields.
+  printf '%s\n' '{"no_auth":true}' >"$data_dir/options.json"
+  restart
+  request "$prefix/api/auth/status" >"$tmp_response"
   grep -q '"authRequired":false' "$tmp_response"
-  curl -fsS "$base/api/hassio_ingress/testtoken/api/auth/status" -o "$tmp_response"
-  grep -q '"authRequired":false' "$tmp_response"
-  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false) process.exit(1)'
+  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false || c.DiscordUpdateIntervalMinutes!==17) process.exit(1)'
 
   # Turning the option off must preserve the existing upstream value.
-  docker exec "$container" sh -c "printf '%s\\n' '{\"no_auth\":false}' > /data/options.json"
-  docker rm -f "$container" >/dev/null
-  docker run -d --name "$container" -p 127.0.0.1::3000 -v "$data_dir:/data" "$image" >/dev/null
-  port="$(docker inspect "$container" --format '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}')"
-  base="http://127.0.0.1:$port"
-  for _ in $(seq 1 60); do
-    if curl -fsS "$base/api/auth/status" -o "$tmp_response"; then break; fi
-    sleep 1
-  done
+  printf '%s\n' '{"no_auth":false}' >"$data_dir/options.json"
+  restart
+  request "$prefix/api/auth/status" >"$tmp_response"
   grep -q '"authRequired":false' "$tmp_response"
-  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false) process.exit(1)'
+  docker exec "$container" node -e 'const c=JSON.parse(require("fs").readFileSync("/data/config.json")); if(c.WebUIPasswordRequired!==false || c.DiscordUpdateIntervalMinutes!==17) process.exit(1)'
 fi
 
 test -d "$data_dir"
 docker inspect "$container" --format '{{json .Config.Env}}' | grep -q 'DATA_DIR=/data'
-
 docker exec "$container" sh -c 'test -d /data && test ! -e /config'
+echo "smoke ok: $image (isolated ingress, auth, assets, persistence)"
