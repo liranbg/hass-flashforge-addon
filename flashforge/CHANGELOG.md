@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Promote the tested experimental add-on, using upstream FlashForgeWebUI `v1.2.1`, to the regular add-on.
+- Preserve the experimental add-on's separate slug, opt-in `no_auth`, and existing authentication behavior.
+- Keep the official immutable GitLab binary source and independently verified per-architecture SHA-256 checksums.
+
 ## 0.2.1
 
 - Update stable upstream FlashForgeWebUI from `v1.1.0` to `v1.2.1`.
