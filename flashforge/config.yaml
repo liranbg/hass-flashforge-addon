@@ -14,6 +14,7 @@ arch:
 ingress: true
 ingress_port: 3000
 ingress_stream: true
+watchdog: "http://[HOST]:[PORT:3000]/api/auth/status"
 panel_icon: mdi:printer-3d
 panel_title: FlashForge WebUI
 
