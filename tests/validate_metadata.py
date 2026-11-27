@@ -15,7 +15,7 @@ ADDONS = {
     'flashforge-dev': {
         'slug': 'flashforge_webui_experimental',
         'image': 'ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}',
-        'version': '0.4.0-dev.1',
+        'version': '0.4.0-dev.2',
     },
 }
 
@@ -112,7 +112,7 @@ for addon_dir, expected_meta in ADDONS.items():
         'webui_password: password',
     ]
     if addon_dir == 'flashforge-dev':
-        expected_options.extend(['no_auth: false', 'no_auth: bool'])
+        expected_options.extend(['no_auth: false', 'no_auth: bool', 'debug_logs: false', 'debug_logs: bool'])
     for expected in expected_options:
         if expected not in config_text:
             errors.append(label + f'missing add-on option/schema: {expected}')

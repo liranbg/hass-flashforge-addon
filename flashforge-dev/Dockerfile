@@ -36,6 +36,7 @@ RUN set -euo pipefail; \
   echo "${sha}  flashforge-webui" | sha256sum -c -; \
   chmod +x flashforge-webui
 COPY ingress-adapter.js ./ingress-adapter.js
+COPY log-filter.js ./log-filter.js
 COPY run.sh /run.sh
 RUN chmod +x /run.sh && mkdir -p /data
 

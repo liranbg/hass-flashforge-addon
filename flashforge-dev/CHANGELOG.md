@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0-dev.2
+
+- Hide routine printer polling and status-broadcast messages by default.
+- Add an experimental `debug_logs` option for temporarily restoring that diagnostic output.
+- Keep errors, authentication failures, connection problems, and wrapper lifecycle messages visible.
+
 ## 0.4.0-dev.1
 
 - Add Home Assistant configuration translations, an HTTP watchdog, and graceful shutdown handling.

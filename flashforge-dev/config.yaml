@@ -3,7 +3,7 @@ name: FlashForge WebUI Experimental
 slug: flashforge_webui_experimental
 description: "Experimental FlashForge WebUI add-on using stable upstream"
 url: "https://github.com/liranbg/hass-flashforge-addon"
-version: "0.4.0-dev.1"
+version: "0.4.0-dev.2"
 image: "ghcr.io/liranbg/hass-flashforge-addon/dev/{arch}"
 startup: services
 init: false
@@ -27,12 +27,14 @@ options:
   all_saved_printers: false
   webui_password: ""
   no_auth: false
+  debug_logs: false
 schema:
   no_printers: bool
   last_used: bool
   all_saved_printers: bool
   webui_password: password
   no_auth: bool
+  debug_logs: bool
 
 backup_exclude:
   - "*.log"
