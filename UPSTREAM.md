@@ -19,7 +19,7 @@ These checksums were computed from actual bytes copied out of each immutable off
 
 Docker selects the upstream stage using the build's target platform. Existing CI/release matrices set both the Docker platform and `BUILD_ARCH`; a mismatched architecture fails the binary checksum check. The Home Assistant Bookworm base, Node ingress adapter, tini, startup options, `/data`, image paths and permission boundaries stay unchanged. No upstream runtime image configuration, user, entrypoint, volumes or ports are inherited.
 
-Stable advances from upstream 1.1.0 to 1.2.1 (add-on 0.3.0); DEV advances from 1.2.0 to 1.2.1 (add-on 0.3.0-dev.3). DEV keeps its separate slug and intentional opt-in `no_auth` handling. Neither ingress adapter is changed or copied over the other; existing auth and CSS differences are outside this dependency migration.
+Stable advances from upstream 1.1.0 to 1.2.1 (add-on 0.3.0); DEV advances from 1.2.0 to 1.2.1 (add-on 0.4.0-dev.1). DEV keeps its separate slug and intentional opt-in `no_auth` handling. Neither ingress adapter is changed or copied over the other; existing auth and CSS differences are outside this dependency migration.
 
 ## Reproduce and update
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0-dev.1
+
+- Add Home Assistant configuration translations, an HTTP watchdog, and graceful shutdown handling.
+- Forward `text/css` responses through the experimental ingress adapter, matching the stable adapter.
+- Keep the experimental slug, opt-in `no_auth`, and upstream FlashForgeWebUI `v1.2.1`.
+
 ## 0.3.0-dev.3
 
 - Update experimental upstream FlashForgeWebUI from `v1.2.0` to `v1.2.1` and migrate binary sourcing to the official immutable GitLab registry image.
