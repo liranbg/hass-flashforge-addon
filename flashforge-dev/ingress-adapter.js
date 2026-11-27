@@ -123,7 +123,11 @@ function proxyHttp(req, res) {
         let body = Buffer.concat(chunks);
         const headers = { ...upstreamRes.headers };
         delete headers['content-length'];
-        if (contentType.includes('text/html') || contentType.includes('javascript')) {
+        if (
+          contentType.includes('text/html') ||
+          contentType.includes('javascript') ||
+          contentType.includes('text/css')
+        ) {
           body = rewriteText(body, contentType);
         }
         res.writeHead(upstreamRes.statusCode || 502, headers);
@@ -144,12 +148,18 @@ removeBundledDemoPrinter(addonOptions);
 const childArgs = flashforgeArgs(addonOptions);
 console.log(`[adapter] Starting FlashForgeWebUI with args: ${maskSensitiveArgs(childArgs).join(' ')}`);
 
+let shuttingDown = false;
+
 const child = spawn('./flashforge-webui', childArgs, {
   cwd: '/opt/flashforge-webui',
   env: { ...process.env, DATA_DIR: process.env.DATA_DIR || '/data' },
   stdio: ['ignore', 'inherit', 'inherit'],
 });
 child.on('exit', (code, signal) => {
+  if (shuttingDown) {
+    console.log(`[adapter] FlashForgeWebUI stopped code=${code} signal=${signal}`);
+    process.exit(0);
+  }
   console.error(`[adapter] FlashForgeWebUI exited code=${code} signal=${signal}`);
   process.exit(code || 1);
 });
@@ -171,11 +181,18 @@ server.listen(listenPort, '0.0.0.0', () => {
   console.log(`[adapter] listening on ${listenPort}, proxying FlashForgeWebUI on ${backendPort}`);
 });
 
-process.on('SIGTERM', () => {
-  child.kill('SIGTERM');
-  server.close(() => process.exit(0));
-});
-process.on('SIGINT', () => {
-  child.kill('SIGINT');
-  server.close(() => process.exit(0));
-});
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[adapter] Received ${signal}, shutting down`);
+  server.close();
+  child.kill(signal);
+  setTimeout(() => {
+    console.warn('[adapter] Timed out waiting for FlashForgeWebUI exit, forcing SIGKILL');
+    child.kill('SIGKILL');
+    process.exit(1);
+  }, 5000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

@@ -80,4 +80,10 @@ fi
 test -d "$data_dir"
 docker inspect "$container" --format '{{json .Config.Env}}' | grep -q 'DATA_DIR=/data'
 docker exec "$container" sh -c 'test -d /data && test ! -e /config'
-echo "smoke ok: $image (isolated ingress, auth, assets, persistence)"
+
+# Verify SIGTERM triggers a clean shutdown (exit code 0).
+docker stop -t 10 "$container" >/dev/null
+exit_code="$(docker inspect "$container" --format '{{.State.ExitCode}}')"
+test "$exit_code" -eq 0
+
+echo "smoke ok: $image (isolated ingress, auth, assets, persistence, shutdown)"

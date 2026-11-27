@@ -1,0 +1,16 @@
+configuration:
+  no_printers:
+    name: Start without connecting to printers
+    description: Start FlashForge WebUI without automatically connecting to any saved printer.
+  last_used:
+    name: Connect to last used printer
+    description: Automatically connect to the last used printer on startup (ignored when start without printers is enabled).
+  all_saved_printers:
+    name: Connect to all saved printers
+    description: Automatically connect to all saved printers on startup (ignored when start without printers is enabled).
+  webui_password:
+    name: WebUI password
+    description: Optional password passed to FlashForge WebUI on startup. Leave empty to use the password configured in the UI.
+  no_auth:
+    name: Disable WebUI password prompt
+    description: Set upstream WebUIPasswordRequired to false on startup. Home Assistant Ingress remains the access-control boundary; when off, the existing upstream setting is preserved.
